@@ -24,7 +24,7 @@ what the TV's engine can do, not by the model:
 
 | webOS | Model years | Engine | Video route | Status |
 |---|---|---|---|---|
-| 3.x | 2016–2017, and LG's monitor TVs such as the 24TL520S | Chrome 38 | None yet | Catalog tested; no video: the engine's WebRTC has the old API and VP8 only |
+| 3.x | 2016–2017, and LG's monitor TVs such as the 24TL520S | Chrome 38 | None yet | Catalog tested. No video: the engine's WebRTC has only DTLS 1.0, and Neko needs DTLS 1.2 (tested: "unsupported protocol version") |
 | 4.x | 2018–2019 | Chromium 53 | Built-in client | Not tested |
 | 5.x | 2020 | Chromium 68 | Built-in client | Not tested |
 | 6.x | 2021 | Chromium 79 | Built-in client | Not tested |
