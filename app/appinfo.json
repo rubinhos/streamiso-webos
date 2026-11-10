@@ -7,7 +7,7 @@
   "title": "StreamISO",
   "icon": "icon.png",
   "largeIcon": "largeIcon.png",
-  "bgColor": "#0c0f13",
+  "iconColor": "#1b2039",
   "resolution": "1920x1080",
   "disableBackHistoryAPI": true
 }

@@ -10,6 +10,8 @@
     var mode = S.stream.mode();
     lines.push("WebRTC       " + (mode === "none" ? "not available in this engine" : "available"));
     lines.push("Video route  " + (mode === "iframe" ? "Neko page in an iframe" : mode === "client" ? "built-in Neko client" : "none"));
+    lines.push("Screen       window " + window.innerWidth + "x" + window.innerHeight + ", screen " + screen.width + "x" +
+      screen.height + ", pixel ratio " + window.devicePixelRatio + ", scale " + (document.documentElement.style.zoom || "1"));
     return lines.join("\n");
   }
 
@@ -49,7 +51,22 @@
       field = S.$("server-field");
       message = S.$("settings-message");
       S.$("settings-diag").textContent = diagnostics();
-      input.addEventListener("blur", function () { setTimeout(stopEditing, 0); });
+      // The field loses the focus when the viewer leaves it, and also when webOS shows its keyboard, because the
+      // app's window loses the focus then. Only leaving the field ends the editing, or the keyboard would close as
+      // soon as it opens. When only the window lost the focus, the field is still the active element.
+      input.addEventListener("blur", function () {
+        setTimeout(function () { if (document.activeElement !== input) stopEditing(); }, 0);
+      });
+      // The keyboard was closed (Back, or its own close key). The voice key closes it for a moment and opens it
+      // again, so this waits before ending the editing.
+      var keyboardOpen = false;
+      document.addEventListener("keyboardStateChange", function (e) {
+        keyboardOpen = !!(e.detail && e.detail.visibility);
+        if (keyboardOpen) return;
+        setTimeout(function () {
+          if (!keyboardOpen && document.activeElement === input && document.hasFocus()) stopEditing();
+        }, 1500);
+      });
       S.$("settings").addEventListener("click", function (e) {
         var act = e.target.closest("[data-act]");
         if (!act) return;
