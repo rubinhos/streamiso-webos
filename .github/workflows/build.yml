@@ -1,0 +1,66 @@
+# Tests the app in a headless Chrome, then packages it as an .ipk for webOS.
+# On every push and pull request the .ipk is kept as a workflow artifact. A tag such as v0.1.0 also publishes it
+# as a GitHub release, with that version in the app.
+name: Build
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+
+      - name: Check the JavaScript parses as ES5
+        run: npx --yes acorn@8.14.0 --ecma5 --silent app/js/*.js
+
+      - name: Test against the simulated server
+        run: |
+          python tools/mock_server.py > mock.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8090/healthz > /dev/null && break; sleep 1; done
+          node tools/ci_tests.mjs "${{ steps.chrome.outputs.chrome-path }}"
+
+      - name: Set the version from the tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "The tag must look like v1.2.3"; exit 1; }
+          jq --arg v "$VERSION" '.version = $v' app/appinfo.json > appinfo.tmp && mv appinfo.tmp app/appinfo.json
+          sed -i "s/App version  [0-9.]*/App version  $VERSION/" app/js/settings.js
+
+      - name: Package
+        run: |
+          npm install -g @webos-tools/cli@3
+          mkdir -p dist
+          ares-package --no-minify app -o dist
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: streamiso-webos
+          path: dist/*.ipk
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.ipk --title "StreamISO for LG TV $GITHUB_REF_NAME" --generate-notes --prerelease

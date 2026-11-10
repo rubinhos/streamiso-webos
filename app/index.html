@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>StreamISO</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<section id="settings" class="screen" hidden>
+  <img class="logo" src="img/logo.svg" alt="StreamISO">
+  <h1 id="settings-title">Connect to your server</h1>
+  <p class="muted">The address of your StreamISO server, for example 192.168.0.10:8080. Press OK to type.</p>
+  <div id="server-field" class="field" tabindex="-1" data-focusable data-act="edit">
+    <input id="server-input" type="text" tabindex="-1" autocomplete="off" spellcheck="false">
+  </div>
+  <p id="settings-message" class="message" role="status"></p>
+  <div class="row">
+    <button id="settings-save" type="button" class="btn" tabindex="-1" data-focusable data-act="save">Save and connect</button>
+    <button id="settings-back" type="button" class="btn" tabindex="-1" data-focusable data-act="cancel">Back</button>
+  </div>
+  <h2>About this TV</h2>
+  <pre id="settings-diag" class="diag"></pre>
+</section>
+
+<section id="catalog" class="screen" hidden>
+  <header id="catalog-head">
+    <img class="logo small" src="img/logo.svg" alt="StreamISO">
+    <div id="detail">
+      <div id="detail-title"></div>
+      <div id="detail-meta" class="muted"></div>
+      <div id="detail-text" class="muted"></div>
+    </div>
+    <!-- Shows or hides the discs already watched / listened to, which are hidden at first. -->
+    <button id="catalog-seen" type="button" class="btn" tabindex="-1" data-focusable aria-pressed="false">
+      <svg class="eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5C6.5 5 2.3 8.6 1 12c1.3 3.4 5.5 7 11 7s9.7-3.6 11-7c-1.3-3.4-5.5-7-11-7zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+      <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.3 3.7 3.7 2.3l18 18-1.4 1.4-3.4-3.4A12 12 0 0 1 12 19c-5.5 0-9.7-3.6-11-7a12.6 12.6 0 0 1 4.2-5.3L2.3 3.7zM12 5c5.5 0 9.7 3.6 11 7a12.4 12.4 0 0 1-3.3 4.6l-3.3-3.3A4.5 4.5 0 0 0 10.7 7.6L8.3 5.2C9.5 5.1 10.7 5 12 5zm-4.4 4.1A4.5 4.5 0 0 0 14.9 15.4l-1.5-1.5a2.5 2.5 0 0 1-3.3-3.3L7.6 9.1z"/></svg>
+      <span class="lbl">Show watched</span>
+    </button>
+    <button id="catalog-settings" type="button" class="btn" tabindex="-1" data-focusable>Settings</button>
+  </header>
+  <main id="catalog-scroll" data-scroll><div id="catalog-list"></div></main>
+</section>
+
+<section id="player" class="screen" hidden>
+  <div id="stage"></div>
+  <div id="cd" hidden>
+    <div id="cd-info">
+      <img id="cd-cover" alt="">
+      <div id="cd-title"></div>
+      <div id="cd-artist" class="muted"></div>
+    </div>
+    <ol id="cd-tracks" data-scroll></ol>
+  </div>
+  <div id="loading"><div class="spinner"></div><div id="loading-title"></div><div id="loading-text" class="muted"></div></div>
+  <div id="sink" tabindex="-1" data-focusable></div>
+  <div id="bar" hidden>
+    <div id="bar-head"><div id="bar-title"></div><div id="bar-caption"></div></div>
+    <div id="progress" tabindex="-1" data-focusable data-act="commit" aria-label="Seek: left and right"><div id="progress-fill"></div></div>
+    <div id="bar-times" class="muted"><span id="time-now"></span><span id="bar-extra"></span><span id="time-left"></span></div>
+    <div id="bar-buttons" class="row">
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="leave" aria-label="Back to library"><svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg></button>
+      <span class="sep"></span>
+      <button type="button" class="btn icon big" tabindex="-1" data-focusable data-act="toggle" id="btn-toggle" aria-label="Pause"></button>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="prev" id="btn-prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg></button>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="back10" aria-label="Back 10 seconds"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.2" text-anchor="middle" font-size="7.5" font-weight="700" font-family="sans-serif">10</text></svg></button>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="fwd10" aria-label="Forward 10 seconds"><svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/><text x="12" y="16.2" text-anchor="middle" font-size="7.5" font-weight="700" font-family="sans-serif">10</text></svg></button>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="next" id="btn-next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+      <span class="sep"></span>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="voldown" aria-label="Volume down"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z"/></svg></button>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="mute" id="btn-mute" aria-label="Mute"><svg viewBox="0 0 24 24"><path d="M16.5 12A4.5 4.5 0 0 0 14 8v2.2l2.4 2.4c.1-.2.1-.4.1-.6zM19 12c0 .9-.2 1.8-.5 2.6l1.5 1.5A9 9 0 0 0 21 12a9 9 0 0 0-7-8.8v2.1c2.9.9 5 3.5 5 6.7zM4.3 3L3 4.3 7.7 9H3v6h4l5 5v-6.7l4.3 4.3c-.7.5-1.4.9-2.3 1.2v2.1a9 9 0 0 0 3.7-1.8l2 2L21 19.7l-9-9zM12 4L9.9 6.1 12 8.2z"/></svg></button>
+      <button type="button" class="btn icon" tabindex="-1" data-focusable data-act="volup" aria-label="Volume up"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg></button>
+      <span class="grow"></span>
+      <button type="button" class="btn labeled dvd-only" tabindex="-1" data-focusable data-act="back" aria-label="Return"><svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>Return</button>
+      <button type="button" class="btn labeled dvd-only" tabindex="-1" data-focusable data-act="menu" aria-label="DVD menu"><svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>DVD menu</button>
+      <button type="button" class="btn icon dvd-only" tabindex="-1" data-focusable data-act="audio" aria-label="Audio"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg></button>
+      <button type="button" class="btn icon dvd-only" tabindex="-1" data-focusable data-act="subs" aria-label="Subtitles"><svg viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM4 12h4v2H4zm10 6H4v-2h10zm6 0h-4v-2h4zm0-4h-10v-2h10z"/></svg></button>
+    </div>
+  </div>
+  <div id="pop" hidden><h3 id="pop-title"></h3><div id="pop-list"></div></div>
+  <div id="hint" hidden>Press any key to turn the sound on</div>
+  <div id="osd" hidden></div>
+</section>
+
+<div id="dialog" hidden>
+  <div id="dialog-box">
+    <h2 id="dialog-title"></h2>
+    <p id="dialog-text" class="muted"></p>
+    <div id="dialog-buttons" class="row"></div>
+  </div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tv.js"></script>
+<script src="js/focus.js"></script>
+<script src="js/dialog.js"></script>
+<script src="js/stream.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/player.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

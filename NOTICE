@@ -1,0 +1,12 @@
+StreamISO for LG TV
+Copyright 2026 Rubens (https://github.com/rubinhos)
+
+This product was written with the help of an AI assistant (Claude, by Anthropic),
+under the direction of the copyright holder above.
+
+This product is a client for StreamISO (https://github.com/rubinhos/streamiso), by the same author,
+and uses its logo and icon. It connects over the network to services that run on the user's own server,
+including Neko (https://github.com/m1k1o/neko) and VLC (https://www.videolan.org). They are not part of
+this product.
+
+"StreamISO" is not affiliated with Stremio or with LG Electronics.

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Mock stream</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #16212c; color: #8fa3b5; font: 42px sans-serif; overflow: hidden; }
+  #picture { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  textarea { position: absolute; left: 0; top: 0; width: 10px; height: 10px; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="picture">Simulated video stream</div>
+<textarea class="overlay"></textarea>
+<script>
+// Behaves like the real page with neko/neko-inject.html from StreamISO. Most importantly, it keeps asking for
+// the keyboard focus for a while, which is the thing the app has to survive.
+(function () {
+  var MEDIA = { 415: "toggle", 19: "toggle", 417: "forward", 412: "rewind", 413: "stop", 461: "back" };
+  var NAV = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "activate" };
+  function send(msg) { msg.streamiso = true; window.parent.postMessage(msg, "*"); }
+
+  var api = location.protocol + "//" + location.hostname + ":8090";
+  var ignoreStarts = 0;
+
+  fetch(api + "/_mock/stream-config").then(function (r) { return r.json(); }).then(function (config) {
+    if (config.silent) return;
+    ignoreStarts = config.unlock_blocked || 0;
+    setTimeout(function () {
+      send({ type: "video-ready" });
+      send({ type: "audio-state", ok: !config.audio_blocked });
+      var input = document.querySelector("textarea");
+      var tries = 0;
+      var timer = setInterval(function () {
+        try { window.focus(); input.focus({ preventScroll: true }); } catch (e) {}
+        if (++tries > 40) clearInterval(timer);
+      }, 500);
+    }, 400);
+  });
+
+  window.addEventListener("message", function (e) {
+    if (e.source !== window.parent || !e.data || e.data.streamiso !== true || e.data.type !== "start") return;
+    // A "start" without a real gesture may not be enough, so the first ones can be set to fail.
+    if (ignoreStarts > 0) { ignoreStarts--; return; }
+    send({ type: "audio-state", ok: true });
+  });
+
+  window.addEventListener("keydown", function (e) {
+    var action = MEDIA[e.keyCode];
+    if (action) send({ type: "key", action: action });
+    else if (NAV[e.key]) send({ type: "key", action: "nav-" + NAV[e.key] });
+  }, true);
+})();
+</script>
+</body>
+</html>

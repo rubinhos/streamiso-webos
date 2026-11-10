@@ -1,0 +1,13 @@
+{
+  "id": "io.github.rubinhos.streamiso",
+  "version": "0.1.0",
+  "vendor": "rubinhos",
+  "type": "web",
+  "main": "index.html",
+  "title": "StreamISO",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "bgColor": "#0c0f13",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true
+}

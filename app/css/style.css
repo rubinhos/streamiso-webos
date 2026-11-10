@@ -1,0 +1,119 @@
+/* Drawn for a 1920x1080 screen. Keep to what older webOS engines understand (Chromium 68 on webOS 5): no flex
+   gap, no aspect-ratio, no inset, no :focus-visible. */
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0c0f13; color: #eef2f6; font: 30px/1.35 "LG Smart UI", "Segoe UI", Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+[hidden] { display: none !important; }
+h1 { margin: 0 0 12px; font-size: 56px; font-weight: 600; }
+h2 { margin: 0 0 12px; font-size: 40px; font-weight: 600; }
+.muted { color: #a4b0bd; }
+.screen { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+.logo { display: block; width: 420px; margin-bottom: 36px; }
+.logo.small { width: 230px; margin: 0; }
+.row { display: flex; align-items: center; }
+.row > * { margin-right: 18px; }
+.row > *:last-child { margin-right: 0; }
+
+/* The focus style. Every focusable thing uses it, so the focus always looks the same. */
+.btn, .card, .field, #cd-tracks li, #pop-list button { outline: none; }
+.btn:focus, .field:focus, .field.editing, #pop-list button:focus, #cd-tracks li:focus {
+  background: #ffc83d; color: #14171b; box-shadow: 0 0 0 5px #fff;
+}
+.btn { font: inherit; padding: 16px 30px; color: inherit; background: #252c35; border: 0; border-radius: 12px; white-space: nowrap; }
+.btn.off { opacity: .55; }
+
+/* Settings */
+#settings { padding: 80px 140px; }
+.field { width: 1000px; padding: 6px; margin: 24px 0 8px; background: #252c35; border-radius: 12px; }
+.field input { width: 100%; padding: 14px 20px; font: inherit; color: #eef2f6; background: #171c22; border: 0; outline: none; border-radius: 8px; }
+.message { min-height: 44px; margin: 8px 0 18px; color: #ff9c9c; }
+.message.ok { color: #75e3a5; }
+#settings h2 { margin-top: 44px; font-size: 30px; color: #a4b0bd; }
+.diag { margin: 0; font: 24px/1.4 Consolas, "DejaVu Sans Mono", monospace; color: #a4b0bd; white-space: pre-wrap; word-break: break-word; }
+
+/* Catalog */
+#catalog-head { position: absolute; left: 0; top: 0; width: 1920px; height: 200px; padding: 28px 70px; display: flex; align-items: flex-start; background: #0c0f13; z-index: 2; }
+#detail { flex: 1; min-width: 0; margin: 0 50px; }
+#catalog-seen { display: flex; align-items: center; margin-right: 20px; }
+#catalog-seen svg { width: 40px; height: 40px; margin-right: 12px; fill: currentColor; }
+/* "Hide watched" is a switch: on (eye crossed out) while watched discs are hidden */
+#catalog-seen .eye-off, #catalog-seen[aria-pressed="true"] .eye { display: none; }
+#catalog-seen[aria-pressed="true"]:not(:focus) { color: #ffc83d; }
+#catalog-seen[aria-pressed="true"] .eye-off { display: block; }
+#detail-title { font-size: 42px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#detail-meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#detail-text { font-size: 25px; max-height: 68px; overflow: hidden; }
+#catalog-scroll { position: absolute; left: 0; top: 200px; width: 1920px; height: 880px; overflow: hidden; padding: 0 70px; }
+.section-title { margin: 12px 0 18px; font-size: 38px; font-weight: 600; }
+.grid { display: flex; flex-wrap: wrap; margin-bottom: 24px; }
+.card { position: relative; display: block; width: 232px; margin: 0 22px 26px 0; padding: 0; color: inherit; font: inherit; text-align: left; background: none; border: 0; }
+.cover { position: relative; display: block; width: 232px; height: 348px; background: #1c2229; border-radius: 12px; overflow: hidden; }
+.card.cd .cover { height: 232px; }
+.cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.cover img.fill { object-fit: cover; }  /* "Fill the space" set in the StreamISO editor */
+.card:focus .cover { box-shadow: 0 0 0 6px #ffc83d, 0 0 0 10px #fff; }
+/* A season with several discs: the cover looks like a small stack of cases. */
+.card.stack .cover { box-shadow: 6px -6px 0 -1px #30363f, 12px -12px 0 -2px #3c434d; }
+.card.stack:focus .cover { box-shadow: 0 0 0 6px #ffc83d, 0 0 0 10px #fff, 6px -6px 0 -1px #30363f, 12px -12px 0 -2px #3c434d; }
+.card-title { display: block; margin-top: 12px; font-size: 25px; line-height: 1.25; height: 32px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card:focus .card-title { color: #ffc83d; }
+.card-resume { display: block; font-size: 21px; color: #a4b0bd; height: 28px; white-space: nowrap; overflow: hidden; }
+.tag, .seen { position: absolute; top: 10px; padding: 2px 12px; font-size: 20px; font-weight: 700; border-radius: 7px; }
+.tag { left: 10px; background: rgba(8, 10, 13, .85); }
+.seen { right: 10px; background: #75e3a5; color: #10231a; }
+.bar-resume { position: absolute; left: 0; bottom: 0; height: 8px; background: #ffc83d; }
+.empty { padding: 90px 0; font-size: 36px; color: #a4b0bd; }
+
+/* Player */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; }
+#stage iframe, #stage video { display: block; width: 100%; height: 100%; border: 0; background: #000; }
+/* The stream never takes the pointer or the focus: all input goes through the app. */
+#stage iframe { pointer-events: none; }
+#sink { position: absolute; left: 0; top: 0; width: 1px; height: 1px; outline: none; }
+#loading { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0c0f13; text-align: center; }
+#loading-title { font-size: 44px; font-weight: 600; margin-top: 34px; }
+.spinner { width: 90px; height: 90px; border: 9px solid #2b333d; border-top-color: #ffc83d; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#bar { position: absolute; left: 0; bottom: 0; width: 1920px; padding: 90px 70px 44px; background: linear-gradient(to top, rgba(6, 8, 10, .95) 65%, rgba(6, 8, 10, 0)); }
+#bar-head { display: flex; align-items: baseline; }
+#bar-title { flex: 1; min-width: 0; font-size: 40px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Icons have no words, so the focused button's name shows here. */
+#bar-caption { margin-left: 40px; font-size: 30px; color: #ffc83d; white-space: nowrap; }
+#progress { height: 12px; margin-top: 16px; background: rgba(255, 255, 255, .22); border-radius: 6px; overflow: hidden; outline: none; }
+#progress:focus { box-shadow: 0 0 0 4px #0c0f13, 0 0 0 8px #ffc83d; }
+#progress-fill { width: 0; height: 100%; background: #ffc83d; }
+#bar-times { display: flex; justify-content: space-between; margin: 8px 0 22px; font-size: 26px; }
+#bar-buttons .btn.icon { width: 84px; height: 84px; padding: 0; }
+#bar-buttons .btn.icon svg { display: block; width: 46px; height: 46px; margin: 0 auto; fill: currentColor; }
+#bar-buttons .btn.icon.big { width: 100px; }
+#bar-buttons .btn.icon.big svg { width: 58px; height: 58px; }
+#bar-buttons .btn.labeled { display: flex; align-items: center; height: 84px; padding: 0 28px; font-size: 28px; }
+#bar-buttons .btn.labeled svg { width: 42px; height: 42px; margin-right: 12px; fill: currentColor; }
+#bar-buttons .sep { width: 18px; }
+#bar-buttons .grow { flex: 1; }
+#pop { position: absolute; right: 70px; bottom: 260px; width: 560px; max-height: 620px; padding: 24px; overflow: hidden; background: #181d23; border-radius: 16px; box-shadow: 0 10px 50px rgba(0, 0, 0, .6); }
+#pop h3 { margin: 0 0 14px; font-size: 32px; }
+#pop-list button { display: block; width: 100%; padding: 12px 20px; margin-bottom: 8px; color: inherit; font: inherit; text-align: left; background: #252c35; border: 0; border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#osd { position: absolute; left: 50%; top: 60px; transform: translateX(-50%); padding: 14px 34px; font-size: 32px; background: rgba(8, 10, 13, .88); border-radius: 14px; }
+#hint { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); padding: 14px 34px; font-size: 30px; color: #14171b; background: #ffc83d; border-radius: 14px; }
+
+/* Audio CD */
+#cd { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; padding: 70px 70px 290px; display: flex; background: #11151a; }
+#cd-info { width: 620px; margin-right: 70px; text-align: center; }
+#cd-cover { display: block; width: 520px; height: 520px; margin: 0 auto 26px; object-fit: contain; background: #1c2229; border-radius: 14px; }
+#cd-title { font-size: 38px; font-weight: 600; max-height: 104px; overflow: hidden; }
+#cd-artist { font-size: 28px; }
+#cd-tracks { flex: 1; min-width: 0; height: 720px; margin: 0; padding: 8px; list-style: none; overflow: hidden; }
+#cd-tracks li { display: flex; align-items: center; padding: 11px 22px; margin-bottom: 6px; border-radius: 10px; }
+#cd-tracks .n { width: 66px; color: #a4b0bd; flex: none; }
+#cd-tracks .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#cd-tracks .d { width: 110px; text-align: right; color: #a4b0bd; flex: none; }
+#cd-tracks li.current { background: #252c35; }
+#cd-tracks li.current .t { color: #ffc83d; font-weight: 600; }
+#cd-tracks li:focus { background: #ffc83d; }
+#cd-tracks li:focus .n, #cd-tracks li:focus .d, #cd-tracks li:focus .t { color: #14171b; }
+.cd-mode .dvd-only { display: none !important; }
+
+/* Dialog */
+#dialog { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: flex; align-items: center; justify-content: center; background: rgba(4, 6, 8, .78); z-index: 10; }
+#dialog-box { width: 1120px; padding: 54px 60px; background: #181d23; border-radius: 20px; box-shadow: 0 20px 70px rgba(0, 0, 0, .7); }
+#dialog-text { margin: 0 0 36px; white-space: pre-line; }

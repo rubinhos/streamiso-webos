@@ -1,0 +1,4 @@
+# Packaging output
+dist/
+*.ipk
+mock.log
