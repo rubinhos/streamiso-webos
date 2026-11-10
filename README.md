@@ -62,7 +62,7 @@ CORS_ORIGIN=null
 4. Note the TV's IP address and the passphrase shown in the app.
 
 Developer mode lasts 50 hours at a time. Open the Developer Mode app and choose **Extend** before it runs out, or
-run `ares-extend-dev --device tv` (with Docker, `tools\ares.ps1 ares-extend-dev --device tv`). When it runs out, the
+run `ares-extend-dev --device tv` (with Docker, `tools\ares.cmd ares-extend-dev --device tv`). When it runs out, the
 apps you installed are removed.
 
 ### 3. Install
@@ -74,11 +74,11 @@ Unix shell):
 
 ```powershell
 # Once: add the TV (its IP address) and get its key (enter the passphrase shown on the TV)
-C:\dev\streamiso-webos\tools\ares.ps1 ares-setup-device -a tv -i "host=192.168.0.20" -i "port=9922" -i "username=prisoner"
-C:\dev\streamiso-webos\tools\ares.ps1 ares-novacom --device tv --getkey
+C:\dev\streamiso-webos\tools\ares.cmd ares-setup-device -a tv -i "host=192.168.0.20" -i "port=9922" -i "username=prisoner"
+C:\dev\streamiso-webos\tools\ares.cmd ares-novacom --device tv --getkey
 
 # Each version
-C:\dev\streamiso-webos\tools\ares.ps1 ares-install --device tv io.github.rubinhos.streamiso_0.1.0_all.ipk
+C:\dev\streamiso-webos\tools\ares.cmd ares-install --device tv io.github.rubinhos.streamiso_0.1.0_all.ipk
 ```
 
 Give file paths relative to the current folder, with forward slashes: only that folder is visible in the container.
