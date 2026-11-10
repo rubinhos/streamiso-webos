@@ -324,8 +324,9 @@
 
     function blockedSound() {
       return toCatalog().then(function () {
-        // Blocks the start itself and the key press that closes the bar, which also tries to turn the sound on.
-        return post("/_mock/set", { unlock_blocked: 2 });
+        // Blocks the start itself. A DVD starts with the bar closed, so the next key press is the one that turns
+        // the sound on.
+        return post("/_mock/set", { unlock_blocked: 1 });
       }).then(function () {
         S().player.config.soundCheckMs = 200;
         return openDisc(DVD_PLAIN);
