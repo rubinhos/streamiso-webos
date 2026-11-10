@@ -355,7 +355,7 @@
         S().focus.focus(discCard(DVD_PLAIN));
         return press("enter");
       }).then(function () {
-        return until(function () { var v = doc().querySelector("#stage video"); return v && //_mock/plain.m3u8$/.test(v.src); }, "the plain video", 8000)
+        return until(function () { var v = doc().querySelector("#stage video"); return v && v.src.slice(-17) === "/_mock/plain.m3u8"; }, "the plain video", 8000)
           .then(function () { return true; }, function () { return false; });
       }).then(function (playing) {
         check("the plain video plays the URL the server gives", playing);
