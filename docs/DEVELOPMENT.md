@@ -1,7 +1,15 @@
 # Development
 
 The app is plain HTML, CSS and JavaScript in `app/`, with no framework and no build step. It has no dependencies at run time.
-Keep it to plain ES5 and to CSS that old Chromium engines understand: webOS 4 runs apps on Chromium 53, webOS 5 on Chromium 68.
+Keep it to plain ES5 and to CSS that old Chromium engines understand. webOS 3 runs apps on Chrome 38 (2014), so
+`js/compat.js`, loaded first, adds what it lacks and the app uses: `Element.closest`, `fetch` and `AbortController`.
+Covers load on scroll there, without `IntersectionObserver`, and the CSS animation needs its `-webkit-` form.
+webOS 4 runs apps on Chromium 53, webOS 5 on Chromium 68.
+
+On such a TV the window is 1280x720 while `innerWidth` still says 1920, so the layout is scaled by `outerWidth`.
+
+To look at the app on the TV, run `ares-inspect --device tv --app io.github.rubinhos.streamiso --host-port 9998` in the
+CLI image with `-p 9998:9998`: the TV's DevTools protocol is then at `http://localhost:9998/json`.
 GitHub Actions checks that the JavaScript parses as ES5, runs the tests in a headless Chrome and builds the `.ipk`.
 
 ## Run it on a PC

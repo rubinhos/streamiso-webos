@@ -11,7 +11,7 @@ running StreamISO server. To learn more about StreamISO itself, see [its reposit
 It is a port of [StreamISO for Samsung TV](https://github.com/rubinhos/streamiso-tizen), with the same screens and keys.
 
 > **Vibe coded:** written with an AI assistant ([Claude](https://claude.ai)) and tested by the author.
-> **Early prototype:** not tried on a TV yet.
+> **Early prototype:** tried on one TV, a 24TL520S (webOS 3.x), where the catalog works but video does not yet.
 
 | | |
 |---|---|
@@ -24,6 +24,7 @@ what the TV's engine can do, not by the model:
 
 | webOS | Model years | Engine | Video route | Status |
 |---|---|---|---|---|
+| 3.x | 2016–2017, and LG's monitor TVs such as the 24TL520S | Chrome 38 | None yet | Catalog tested; no video: the engine's WebRTC has the old API and VP8 only |
 | 4.x | 2018–2019 | Chromium 53 | Built-in client | Not tested |
 | 5.x | 2020 | Chromium 68 | Built-in client | Not tested |
 | 6.x | 2021 | Chromium 79 | Built-in client | Not tested |

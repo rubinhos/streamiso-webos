@@ -239,6 +239,7 @@
   // Covers load as they come near the screen: a big library would otherwise fetch them all at once.
   function loadCovers(list) {
     if (observer) observer.disconnect();
+    if (!window.IntersectionObserver) { loadCoversOnScroll(list); return; }
     observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
@@ -248,6 +249,25 @@
       });
     }, { root: S.$("catalog-scroll"), rootMargin: "500px 0px" });
     Array.prototype.forEach.call(list.querySelectorAll("img[data-src]"), function (img) { observer.observe(img); });
+  }
+
+  // The same for engines without IntersectionObserver (Chrome 38 on webOS 3): a check on each scroll.
+  // It stands in for the observer, so disconnect() stops it when the list is drawn again.
+  function loadCoversOnScroll(list) {
+    var box = S.$("catalog-scroll");
+    var pending = Array.prototype.slice.call(list.querySelectorAll("img[data-src]"));
+    function check() {
+      var view = box.getBoundingClientRect();
+      pending = pending.filter(function (img) {
+        var r = img.getBoundingClientRect();
+        if (r.bottom < view.top - 500 || r.top > view.bottom + 500 || (!r.width && !r.height)) return true;
+        img.src = img.getAttribute("data-src");
+        return false;
+      });
+    }
+    box.addEventListener("scroll", check);
+    observer = { disconnect: function () { box.removeEventListener("scroll", check); } };
+    check();
   }
 
   // Hidden by the eye button: a disc already watched / listened to, or a group whose discs all are.
