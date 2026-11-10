@@ -54,6 +54,13 @@ jobs:
           ares-package --no-minify app -o dist
           ls -l dist
 
+      - name: Check the webOS CLI image builds and packages the app
+        run: |
+          docker build -t streamiso-ares tools/ares
+          mkdir -p ares-check
+          docker run --rm -v "$PWD:/work" streamiso-ares ares-package --no-minify app -o ares-check
+          ls -l ares-check
+
       - uses: actions/upload-artifact@v4
         with:
           name: streamiso-webos
