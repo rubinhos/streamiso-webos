@@ -319,6 +319,9 @@ class Handler(BaseHTTPRequestHandler):
                 state.update({"disc": None, "started": False})
                 log.append({"action": "stop", "value": None})
                 self.send_json(200, {"ok": True})
+            elif path == "/api/stream/hls":
+                log.append({"action": "plain_video", "value": None})
+                self.send_json(200, {"url": "/_mock/plain.m3u8"})
             elif path == "/api/player/cmd":
                 code, answer = command(body.get("action"), body.get("value"))
                 self.send_json(code, answer)

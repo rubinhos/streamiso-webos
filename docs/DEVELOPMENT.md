@@ -56,11 +56,18 @@ docker run --rm -p 8090:8090 -p 8091:8091 -v "$PWD:/repo:ro" python:3.12-slim py
 
 ## The video
 
-The app picks one of two routes. **Settings** shows which one it is using.
+The app picks one of three routes. **Settings** shows which one it is using, and lets you force one (Automatic,
+Plain video or WebRTC).
 
 - **Neko page in an iframe,** as StreamISO's `docs/API.md` describes, on engines that can run that page.
 - **Built-in client** (a WebSocket, `RTCPeerConnection` and a `<video>`) on older engines. The current Neko page uses syntax
   (`?.`, `??`, `||=`) that engines before Chromium 85 cannot parse.
+- **Plain video** (HLS in a `<video>`, played by the TV's own player) where WebRTC cannot work: no `RTCPeerConnection`,
+  or an engine before Chrome 48, the first with DTLS 1.2, which Neko requires. webOS 3 runs apps on Chrome 38, whose
+  WebRTC fails with "unsupported protocol version". The app asks the server with `POST /api/stream/hls`, which starts
+  Neko's broadcast and stops it once the TV stops fetching it. The picture arrives about 5 seconds late, because the
+  TV's player keeps about 2.5 seconds of buffer and cannot be told to keep less, so DVD menus answer slowly. Playing
+  faster to catch up broke that player, and one continuous MPEG-TS stream stalled: HLS was the steadiest.
 
 The built-in client reads Neko's login answer. A 2020 Samsung TV read it without any setting on the server, but a desktop browser
 needs CORS on Neko. Without the answer the client falls back to Neko's older socket, which connected less reliably in

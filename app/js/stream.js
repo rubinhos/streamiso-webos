@@ -244,15 +244,87 @@
     };
   }
 
+  // Plain video (HLS) from the server's /api/stream/hls, played by the TV's own player. For engines whose WebRTC
+  // cannot connect to Neko. The picture is a few seconds late, and nothing else changes: commands still go through
+  // the API, and the TV's player has no autoplay limits for an installed app.
+  function openPlain(url, mount, events) {
+    var video = document.createElement("video");
+    var step = "waiting for the plain video";
+    var reported = false;
+    video.autoplay = true;
+    mount.appendChild(video);
+    video.addEventListener("playing", function ready() {
+      step = "playing";
+      if (reported) return;
+      if (!video.videoWidth) { setTimeout(ready, 200); return; }
+      reported = true;
+      events.onReady();
+      events.onAudio(true);
+    });
+    video.addEventListener("error", function () {
+      var code = video.error ? video.error.code : 0;
+      if (code) events.onError("The TV's player could not play the plain video (error " + code + ").");
+    });
+    video.src = url;
+    var played = video.play();
+    if (played && played.catch) played.catch(function () { /* autoplay starts it */ });
+    return {
+      step: function () { return step; },
+      unlock: function () {
+        var again = video.play();
+        if (again && again.catch) again.catch(function () {});
+      },
+      close: function () {
+        video.removeAttribute("src");
+        try { video.load(); } catch (e) { /* releases the TV's player */ }
+        if (video.parentNode) video.parentNode.removeChild(video);
+      }
+    };
+  }
+
+  var PREFERENCE_KEY = "streamiso.video";
+
+  // The Chrome major version in the user agent, or 0 when it is not Chrome.
+  function chromeVersion() {
+    var match = /Chrome\/(\d+)/.exec(navigator.userAgent);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  function webrtcMode() {
+    if (typeof window.RTCPeerConnection !== "function") return "none";
+    return canLoadNekoPage() ? "iframe" : "client";
+  }
+
   S.stream = {
+    // "auto", "webrtc" or "plain", chosen in Settings.
+    preference: function () {
+      var value = "";
+      try { value = localStorage.getItem(PREFERENCE_KEY) || ""; } catch (e) { /* storage is optional */ }
+      return value === "webrtc" || value === "plain" ? value : "auto";
+    },
+    setPreference: function (value) {
+      try { localStorage.setItem(PREFERENCE_KEY, value); } catch (e) { /* lasts until the app closes */ }
+    },
+    // "iframe" or "client" (WebRTC), "plain" (HLS), or "none".
+    // Automatic takes the plain video where WebRTC cannot work: no RTCPeerConnection, or an engine before Chrome 48,
+    // the first with DTLS 1.2, which Neko requires (webOS 3 runs apps on Chrome 38 and fails with
+    // "unsupported protocol version").
     mode: function () {
-      if (typeof window.RTCPeerConnection !== "function") return "none";
-      return canLoadNekoPage() ? "iframe" : "client";
+      var preference = S.stream.preference();
+      if (preference === "plain") return "plain";
+      var webrtc = webrtcMode();
+      if (preference === "webrtc") return webrtc;
+      var version = chromeVersion();
+      if (webrtc === "none" || (version && version < 48)) return "plain";
+      return webrtc;
     },
     open: function (url, mount, events) {
-      return (S.stream.mode() === "iframe" ? openIframe : openClient)(url, mount, events);
+      var mode = S.stream.mode();
+      var open = mode === "plain" ? openPlain : mode === "iframe" ? openIframe : openClient;
+      return open(url, mount, events);
     },
     openClient: openClient,
-    openIframe: openIframe
+    openIframe: openIframe,
+    openPlain: openPlain
   };
 })(window.Streamiso);

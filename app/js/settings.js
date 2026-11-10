@@ -5,14 +5,30 @@
   var onDone = null;
   var input, field, message;
 
+  var ROUTES = { iframe: "WebRTC, Neko page in an iframe", client: "WebRTC, built-in Neko client", plain: "plain video (HLS)", none: "none" };
+  var PREFERENCES = ["auto", "plain", "webrtc"];
+  var PREFERENCE_NAMES = { auto: "Automatic", plain: "Plain video", webrtc: "WebRTC" };
+
   function diagnostics() {
     var lines = ["App version  0.1.0", "Engine       " + navigator.userAgent];
-    var mode = S.stream.mode();
-    lines.push("WebRTC       " + (mode === "none" ? "not available in this engine" : "available"));
-    lines.push("Video route  " + (mode === "iframe" ? "Neko page in an iframe" : mode === "client" ? "built-in Neko client" : "none"));
+    lines.push("WebRTC       " + (typeof window.RTCPeerConnection === "function" ? "available" : "not available in this engine"));
+    lines.push("Video route  " + ROUTES[S.stream.mode()]);
     lines.push("Screen       window " + window.innerWidth + "x" + window.innerHeight + ", screen " + screen.width + "x" +
       screen.height + ", pixel ratio " + window.devicePixelRatio + ", scale " + (document.documentElement.style.zoom || "1"));
     return lines.join("\n");
+  }
+
+  function showVideoChoice() {
+    var preference = S.stream.preference();
+    S.$("settings-video").textContent = "Video: " + PREFERENCE_NAMES[preference] +
+      (preference === "auto" ? " (" + ROUTES[S.stream.mode()] + ")" : "");
+    S.$("settings-diag").textContent = diagnostics();
+  }
+
+  function nextVideoChoice() {
+    var at = PREFERENCES.indexOf(S.stream.preference());
+    S.stream.setPreference(PREFERENCES[(at + 1) % PREFERENCES.length]);
+    showVideoChoice();
   }
 
   function stopEditing() {
@@ -50,7 +66,7 @@
       input = S.$("server-input");
       field = S.$("server-field");
       message = S.$("settings-message");
-      S.$("settings-diag").textContent = diagnostics();
+      showVideoChoice();
       // The field loses the focus when the viewer leaves it, and also when webOS shows its keyboard, because the
       // app's window loses the focus then. Only leaving the field ends the editing, or the keyboard would close as
       // soon as it opens. When only the window lost the focus, the field is still the active element.
@@ -78,6 +94,8 @@
           input.focus();
         } else if (name === "save") {
           save();
+        } else if (name === "video") {
+          nextVideoChoice();
         } else if (name === "cancel") {
           S.settings.back();
         }

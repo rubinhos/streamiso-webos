@@ -319,7 +319,7 @@
 
   // The network is only worth blaming once the TV has answered the server's offer.
   function streamFailure() {
-    var step = session.stream && session.stream.step ? session.stream.step() : "";
+    var step = session.stream && session.stream.step ? session.stream.step() : "asking the server for the plain video";
     var text = "No picture after " + Math.round(config.readyTimeoutMs / 1000) + " seconds. Last step: " + step + ".";
     if (/network/.test(step)) text += "\nCheck SERVER_IP on the server and that UDP ports 52000-52100 are open.";
     failure("The video did not start", text, reopen);
@@ -409,11 +409,32 @@
     session.info = info;
     S$("bar-title").textContent = info.title || session.disc.title;
     if (session.kind === "cd") buildCd(info);
-    if (S.stream.mode() === "none") {
-      failure("This TV cannot play the stream", "The web engine for installed apps on this TV has no WebRTC.");
+    var mode = S.stream.mode();
+    if (mode === "none") {
+      failure("This TV cannot play the stream",
+        "The web engine for installed apps on this TV has no WebRTC. Choose Plain video in Settings.");
       return;
     }
-    session.stream = S.stream.open(info.url, S$("stage"), {
+    var current = session;
+    if (mode === "plain") {
+      // The server starts the plain video and gives its URL once it can be played.
+      S.api.plainVideo().then(function (url) {
+        if (current === session) openStream(url);
+      }, function (err) {
+        if (current === session) failure("The plain video did not start", err.message, reopen);
+      });
+    } else {
+      openStream(info.url);
+    }
+    session.readyTimer = setTimeout(function () {
+      if (session && !session.streamReady) streamFailure();
+    }, config.readyTimeoutMs);
+    session.poll = setInterval(poll, config.pollMs);
+    poll();
+  }
+
+  function openStream(url) {
+    session.stream = S.stream.open(url, S$("stage"), {
       onReady: function () {
         if (!session) return;
         session.streamReady = true;
@@ -436,11 +457,6 @@
         else if (action.indexOf("nav-") === 0) S.player.handleKey(action === "nav-activate" ? "enter" : action.slice(4));
       }
     });
-    session.readyTimer = setTimeout(function () {
-      if (session && !session.streamReady) streamFailure();
-    }, config.readyTimeoutMs);
-    session.poll = setInterval(poll, config.pollMs);
-    poll();
   }
 
   function teardown() {

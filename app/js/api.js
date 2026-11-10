@@ -23,9 +23,9 @@
     this.status = status || 0;
   }
 
-  function request(base, path, body) {
+  function request(base, path, body, timeoutMs) {
     var controller = new AbortController();
-    var timer = setTimeout(function () { controller.abort(); }, TIMEOUT_MS);
+    var timer = setTimeout(function () { controller.abort(); }, timeoutMs || TIMEOUT_MS);
     var options = { method: body === undefined ? "GET" : "POST", signal: controller.signal };
     if (body !== undefined) {
       options.headers = { "Content-Type": "application/json" };
@@ -62,6 +62,11 @@
     player: function () { return request(server, "/api/player"); },
     status: function () { return request(server, "/api/player/status"); },
     stop: function () { return request(server, "/api/stop", {}); },
+    // Starts the plain video (HLS) for a TV whose WebRTC cannot connect, and gives its full URL. The server
+    // answers once it can be played, which takes a few seconds.
+    plainVideo: function () {
+      return request(server, "/api/stream/hls", {}, 20000).then(function (data) { return server + data.url; });
+    },
     // Best effort, for when the app is closing and cannot wait for an answer.
     stopBeacon: function () { try { navigator.sendBeacon(server + "/api/stop", ""); } catch (e) { /* closing anyway */ } },
     cmd: function (action, value) {

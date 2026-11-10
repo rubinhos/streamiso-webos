@@ -70,6 +70,7 @@
   function loadApp(server, showSeen) {
     localStorage.setItem("streamiso.server", server === undefined ? location.origin : server);
     localStorage.removeItem("streamiso.showSeen");
+    localStorage.removeItem("streamiso.video");
     localStorage.setItem("streamiso.hideSeen", showSeen === false ? "1" : "0");
     return new Promise(function (resolve) {
       frame.onload = resolve;
@@ -340,6 +341,30 @@
       }).then(function () {
         check("the next key press turns the sound on", !shown("hint"));
         return press("stop");
+      });
+    },
+
+    // Plain video: the app asks the server for it and plays its URL with a <video>. A desktop Chrome cannot
+    // play HLS, so this only checks the request and the URL, not the picture.
+    function plainVideo() {
+      return toCatalog().then(function () {
+        localStorage.setItem("streamiso.video", "plain");
+        check("Settings can choose plain video", S().stream.mode() === "plain", S().stream.mode());
+        return clearLog();
+      }).then(function () {
+        S().focus.focus(discCard(DVD_PLAIN));
+        return press("enter");
+      }).then(function () {
+        return until(function () { var v = doc().querySelector("#stage video"); return v && //_mock/plain.m3u8$/.test(v.src); }, "the plain video", 8000)
+          .then(function () { return true; }, function () { return false; });
+      }).then(function (playing) {
+        check("the plain video plays the URL the server gives", playing);
+        return actions();
+      }).then(function (log) {
+        check("the app asks the server for the plain video", hasAction(log, "plain_video"), log);
+        check("the WebRTC page is not loaded", !doc().querySelector("#stage iframe"));
+        localStorage.removeItem("streamiso.video");
+        return toCatalog();
       });
     },
 
