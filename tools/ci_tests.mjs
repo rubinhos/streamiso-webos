@@ -32,14 +32,16 @@ async function title() {
   }
 }
 
-let last = "", code = 1;
+// The title only grows: each poll prints the lines added since the last one.
+let last = "", shownLines = 0, code = 1;
 const end = Date.now() + LIMIT_MS;
 while (Date.now() < end) {
   const now = await title();
   if (now !== last) {
     last = now;
-    const tail = now.split(" || ").pop();
-    if (tail) console.log(tail);
+    const lines = now.split(" || ");
+    lines.slice(shownLines).forEach((line) => { if (!/^DONE/.test(line)) console.log(line); });
+    shownLines = lines.length;
   }
   const done = /DONE passed=(\d+) failed=(\d+)(?: :: (.*))?$/.exec(now);
   if (done) {
