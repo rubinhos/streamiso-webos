@@ -40,7 +40,7 @@ The `.ipk` package is built by GitHub Actions. Download it from
 
 To put it on the TV you need a PC on the same network as the TV, with one of these:
 
-- **Docker**, with this repository cloned: `toolsres.cmd` (Windows) or `tools/ares.sh` runs LG's
+- **Docker**, with this repository cloned: `toolsares.cmd` (Windows) or `tools/ares.sh` runs LG's
   [webOS CLI](https://webostv.developer.lge.com/develop/tools/cli-installation) in a container, built the first time.
   The TV's settings and key stay in `.ares/`, which git ignores.
 - [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop), a desktop app that needs nothing else, or
@@ -83,7 +83,7 @@ C:\dev\streamiso-webos\tools\ares.cmd ares-install --device tv io.github.rubinho
 
 Give file paths relative to the current folder, with forward slashes: only that folder is visible in the container.
 
-**webOS CLI installed with Node:** the same commands, without `toolsres.cmd`.
+**webOS CLI installed with Node:** the same commands, without `toolsares.cmd`.
 
 ### 4. Open the app
 
