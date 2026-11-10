@@ -24,10 +24,9 @@
     else controller().handleKey(name);
   }
 
-  // The layout is drawn for 1920x1080 and scaled to the window. Use innerWidth and innerHeight: on a webOS 3 TV
-  // (24TL520S) outerWidth says 1280 while the screen shows the whole 1920x1080 window, and DevTools screenshots
-  // there show only 1280x720 of it, so neither can be trusted. Some TVs report their final size only after the
-  // app has started, so this runs again a little later. On a PC, a smaller window shows the layout scaled down.
+  // The layout is drawn for 1920x1080 and scaled to the window, which appinfo.json asks to be 1280x720 (see
+  // docs/DEVELOPMENT.md). Some TVs report their final size only after the app has started, so this runs again a
+  // little later. On a PC, a smaller window shows the layout scaled down.
   function fitWindow() {
     var w = window.innerWidth, h = window.innerHeight;
     if (!w || !h) return;

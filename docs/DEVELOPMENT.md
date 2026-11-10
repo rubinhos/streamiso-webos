@@ -6,7 +6,10 @@ Keep it to plain ES5 and to CSS that old Chromium engines understand. webOS 3 ru
 Covers load on scroll there, without `IntersectionObserver`, and the CSS animation needs its `-webkit-` form.
 webOS 4 runs apps on Chromium 53, webOS 5 on Chromium 68.
 
-On such a TV the window is 1280x720 while `innerWidth` still says 1920, so the layout is scaled by `outerWidth`.
+`appinfo.json` asks for a 1280x720 window, and the layout, drawn for 1920x1080, is scaled down to it. With the
+default 1920x1080 window, a TV with a 1366x768 panel (24TL520S) drew only 1366x768 of it, the top left 71% of the
+screen, and left the rest black. Check the fit with a photo of the screen: `outerWidth` and DevTools screenshots
+did not match what that TV showed.
 
 To look at the app on the TV, run `ares-inspect --device tv --app io.github.rubinhos.streamiso --host-port 9998` in the
 CLI image with `-p 9998:9998`: the TV's DevTools protocol is then at `http://localhost:9998/json`.
