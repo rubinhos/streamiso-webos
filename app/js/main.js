@@ -24,9 +24,14 @@
     else controller().handleKey(name);
   }
 
-  // A window narrower than the TV, on a PC, shows the whole 1920x1080 layout scaled down.
+  // The layout is drawn for 1920x1080 and scaled to the window. The TV should give the app a 1920x1080 window
+  // (appinfo.json), but some report another size, or their final size only after the app has started, so this
+  // runs again a little later. On a PC, a smaller window shows the whole layout scaled down.
   function fitWindow() {
-    document.documentElement.style.zoom = window.innerWidth === 1920 ? "" : String(window.innerWidth / 1920);
+    var w = window.innerWidth, h = window.innerHeight;
+    if (!w || !h) return;
+    var scale = Math.min(w / 1920, h / 1080);
+    document.documentElement.style.zoom = Math.abs(scale - 1) < 0.01 ? "" : String(scale);
   }
 
   function openSettings() {
@@ -36,6 +41,9 @@
   function start() {
     fitWindow();
     window.addEventListener("resize", fitWindow);
+    window.addEventListener("load", fitWindow);
+    setTimeout(fitWindow, 500);
+    setTimeout(fitWindow, 2000);
     S.tv.registerKeys();
     S.settings.init();
     S.catalog.init({
