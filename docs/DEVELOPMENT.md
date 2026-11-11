@@ -38,6 +38,7 @@ docker run --rm -p 8090:8090 -p 8091:8091 -v "$PWD:/repo:ro" python:3.12-slim py
 | DVD menu, bar closed | Go to the disc's menu | Open the bar |
 | DVD film, bar closed | Up and Down open the bar. Left, Right and OK go to the disc | Return: the menu of what is playing |
 | DVD, bar open | Move between the controls | Close the bar |
+| Blu-ray, bar closed | Go to the disc (its menu, or its pop-up menu over the film) | Open the bar |
 | CD | Move through the tracks and controls | Return to the catalog |
 
 - The discs of a TV season (`Show S02 D1`, or a season set in StreamISO's editor) form one card, as on StreamISO's web
@@ -46,7 +47,11 @@ docker run --rm -p 8090:8090 -p 8091:8091 -v "$PWD:/repo:ro" python:3.12-slim py
   film and Back in a menu. The bar closes by itself after 6 seconds, and then the arrows go to the disc's menu again.
 - **Return** (Back during a film, or the Return button in the bar) asks StreamISO for the Root menu of the part of the
   disc that is playing, as the Menu key of a DVD remote does. The disc decides which menu that is: often the one the
-  film or extra was started from, sometimes the main menu. **DVD menu** goes to the disc's main menu.
+  film or extra was started from, sometimes the main menu. **Disc menu** goes to the disc's main menu.
+- A Blu-ray (`format: "bluray"` in the API) counts as always in a menu: the background of its menu is a long video,
+  so its length says nothing. All arrows and OK go to the disc; Back or Info open the bar, and its **Disc menu** opens
+  the disc's pop-up menu over the film (discs refuse their main menu during the film). After the start the loading
+  screen stays up, saying why, until the disc's time moves: its Java program takes about 20 seconds to start.
 - A menu is recognized by title 0, no duration, or a duration under 5 minutes. Real menus report a duration, so that alone
   is not enough. For 5 seconds after using the disc (any arrow or OK), Up and Down stay with it even in what looks like a film.
 - The back arrow in the bar, or Stop, leaves a DVD.

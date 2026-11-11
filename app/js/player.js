@@ -5,13 +5,15 @@
 //                    back to the menu of what is playing. In a menu Back opens the bar (a remote without an Info
 //                    key has no other way to it there), and Info always does.
 //   DVD, bar open:   arrows move between the buttons. Back closes it, and so do a few seconds without a key.
+//   Blu-ray:         as a DVD always in a menu: all arrows and OK go to the disc, Back or Info open the bar, and
+//                    the bar's Disc menu opens the disc's pop-up menu over the film.
 //   CD:              there is no video menu, so arrows move through the track list and the buttons.
 //                    Back leaves the player.
 // Media keys work everywhere in the player. The focus never goes into the stream.
 (function (S) {
   "use strict";
 
-  var config = { readyTimeoutMs: 25000, barHideMs: 6000, pollMs: 1000, osdMs: 2500, idleGraceMs: 5000, startRetries: 20, soundCheckMs: 2000, scrubCommitMs: 600, navWindowMs: 5000 };
+  var config = { bdOpeningMs: 60000, readyTimeoutMs: 25000, barHideMs: 6000, pollMs: 1000, osdMs: 2500, idleGraceMs: 5000, startRetries: 20, soundCheckMs: 2000, scrubCommitMs: 600, navWindowMs: 5000 };
   var ARROWS = { left: 1, right: 1, up: 1, down: 1 };
   var SCRUB_RUN_MS = 700;
   var STATUS_SETTLE_MS = 300;
@@ -44,7 +46,10 @@
   // Up and Down open the bar during a film, but a disc's menu needs them. On real discs a menu reports title 0
   // and a duration of seconds to a few minutes, so a short title counts as a menu, as it does for StreamISO's
   // resume. A menu may still look like a film, so these keys also stay with the disc right after using it.
+  // A Blu-ray counts as always in a menu: the background of its menu is a long video, so the length says
+  // nothing, and its pop-up menu shows over the film. Back or Info open the bar, where Disc menu opens the pop-up.
   function inMenu() {
+    if (session.bluray) return true;
     var st = session.status;
     return !st || !st.length || st.title === 0 || st.length < MENU_MAX_SECONDS;
   }
@@ -351,7 +356,20 @@
   function started() {
     session.started = true;
     clearTimeout(session.readyTimer);
-    S$("loading").hidden = true;
+    // A Blu-ray's own program (Java) takes about 20 seconds to start, on a still picture. The cover stays up,
+    // with a word on why, until the disc's time moves (its first studio logo), or a minute at most.
+    session.bdOpening = session.bluray;
+    if (session.bdOpening) {
+      showLoading(session.disc.title, "Opening the Blu-ray… Its menu shows after the studio logos, in about a minute.");
+      var opening = session;
+      setTimeout(function () {
+        if (opening !== session || !session.bdOpening) return;
+        session.bdOpening = false;
+        S$("loading").hidden = true;
+      }, config.bdOpeningMs);
+    } else {
+      S$("loading").hidden = true;
+    }
     session.stream.unlock();
     // The stream only reports a change, so a sound that stays blocked has to be noticed from here.
     var current = session;
@@ -388,7 +406,8 @@
       }
       current.vlcUp = true;
       current.status = st;
-      if (current.started) S$("loading").hidden = true;
+      if (current.bdOpening && st.state === "playing" && st.time > 0) current.bdOpening = false;
+      if (current.started) S$("loading").hidden = !current.bdOpening;
       else S$("loading-text").textContent = current.streamReady ? "Starting the disc" : "Connecting to the video";
       renderStatus();
       tryStart();
@@ -499,7 +518,7 @@
     open: function (disc, resume) {
       S.show("player");
       session = {
-        disc: disc, resume: resume, kind: disc.kind === "cd" ? "cd" : "dvd", openedAt: Date.now(),
+        disc: disc, resume: resume, kind: disc.kind === "cd" ? "cd" : "dvd", bluray: disc.format === "bluray", bdOpening: false, openedAt: Date.now(),
         status: null, stream: null, info: null, failures: 0, track: -1, lastCmd: 0, lastNav: 0,
         streamReady: false, vlcUp: false, starting: false, started: false, failed: false,
         audible: null, barOpen: false, pop: null

@@ -373,6 +373,7 @@
         return sleep(1200);  // lets the stream page try to take the focus
       }).then(function () {
         check("the stream never keeps the focus", active().id === "sink", active().tagName + "#" + active().id);
+        check("the loading cover stays down once the disc plays", !shown("loading"));
         return pressAll(["up", "down", "left", "right", "enter"]);
       }).then(actions).then(function (log) {
         var navs = log.filter(function (e) { return e.action === "nav"; }).map(function (e) { return e.value; });
@@ -764,6 +765,49 @@
       }).then(actions).then(function (log) {
         var starts = log.filter(function (e) { return e.action === "start"; }).length;
         check("start is retried while VLC answers 503", starts >= 3, starts);
+        return press("stop");
+      });
+    },
+
+    function bluray() {
+      var BD = "d00000000016";
+      return toCatalog().then(function () {
+        var tag = discCard(BD) && discCard(BD).querySelector(".tag");
+        check("a Blu-ray's card says Blu-ray", !!tag && tag.textContent === "Blu-ray", tag && tag.textContent);
+        return post("/_mock/set", { bd_opening: 3 });
+      }).then(function () {
+        S().focus.focus(discCard(BD));
+        return press("enter");
+      }).then(function () {
+        return until(function () { return S().player.isOpen() && shown("loading") && /Blu-ray/.test($("loading-text").textContent); },
+          "the Blu-ray's opening cover");
+      }).then(function () {
+        check("while it starts, the cover says its menu comes after the logos", /studio logos/.test($("loading-text").textContent),
+          $("loading-text").textContent);
+        return until(function () { return !shown("loading"); }, "the cover to lift once the disc's time moves", 10000);
+      }).then(function () {
+        return sleep(1500);
+      }).then(function () {
+        check("and it stays down while the disc plays", !shown("loading"));
+        return clearLog();
+      }).then(function () {
+        return pressAll(["up", "down"]);
+      }).then(actions).then(function (log) {
+        check("in a Blu-ray's long menu, Up and Down go to the disc", hasAction(log, "nav", "up") && hasAction(log, "nav", "down"), log);
+        check("and do not open the bar", !shown("bar"));
+        return press("back");
+      }).then(function () {
+        check("on a Blu-ray, Back opens the bar", shown("bar"));
+        var menu = doc().querySelector('[data-act="menu"]');
+        check("the menu button says Disc menu", !!menu && menu.textContent === "Disc menu", menu && menu.textContent);
+        S().focus.focus(menu);
+        return clearLog();
+      }).then(function () {
+        return press("enter");
+      }).then(actions).then(function (log) {
+        check("Disc menu sends menu, which opens a Blu-ray's pop-up menu", hasAction(log, "menu"), log);
+        check("a Blu-ray never gets return", !hasAction(log, "return"), log);
+        check("the bar closes so the arrows reach the pop-up menu", !shown("bar"));
         return press("stop");
       });
     },

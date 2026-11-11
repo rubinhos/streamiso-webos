@@ -132,7 +132,7 @@
     img.setAttribute("data-src", S.api.coverUrl(disc));
     if (disc.cover_fill) img.className = "fill";  // cropped to fill the space, as set in the editor
     cover.appendChild(img);
-    cover.appendChild(element("span", "tag", disc.kind === "cd" ? "CD" : "DVD"));
+    cover.appendChild(element("span", "tag", disc.kind === "cd" ? "CD" : disc.format === "bluray" ? "Blu-ray" : "DVD"));
     if (disc.watched) cover.appendChild(element("span", "seen", disc.kind === "cd" ? "Listened" : "Watched"));
     if (disc.resume && disc.resume.pct) {
       var bar = element("span", "bar-resume");

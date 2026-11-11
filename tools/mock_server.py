@@ -62,6 +62,9 @@ DISCS = [
     dvd(14, "Tales from the Fifth Floor", 2018, ["Comedy"], "An office, an elevator and a very long Tuesday.", season=1, disc=1),
     dvd(15, "Tales from the Fifth Floor", 2019, ["Comedy"], "A new floor opens, and nobody has the key.", season=2, disc=1,
         watched=True),
+    # A Blu-ray: its kind is "dvd" (it plays the same way) and its format "bluray".
+    dvd(16, "The Paper Moon Harbour", 2012, ["Animation", "Family"], "A city of paper boats needs a lighthouse that will not burn.",
+        format="bluray"),
     cd(1, "Harbour Songs", "The Quayside Quartet", 2002, ["Folk"], TONES, resume={"time": 603, "pct": 35, "track": 3, "track_time": 41}),
     cd(2, "Copper and Rain", "Marla Venn", 1999, ["Jazz"], TONES[:5], watched=True),
     cd(3, "Field Recordings for Small Rooms", "Ostinato Club", 2014, ["Ambient"], TONES[2:]),
@@ -84,7 +87,9 @@ def reset():
     state.clear()
     state.update({"disc": None, "resume": False, "opened_at": 0, "started": False, "paused": True, "time": 0.0,
                   "tick": time.time(), "volume": 80, "track": 0, "in_menu": True, "api_down": False,
-                  "stream_silent": False, "audio_blocked": True, "unlock_blocked": 0, "fail_start": 0, "film_length": 6300})
+                  "stream_silent": False, "audio_blocked": True, "unlock_blocked": 0, "fail_start": 0, "film_length": 6300,
+                  # a Blu-ray's time stays at 0 for this long after the start, as while its Java program starts
+                  "bd_opening": 3.0, "bd_hold_until": 0.0})
     del log[:]
 
 
@@ -97,8 +102,8 @@ def find(disc_id):
 
 def advance():
     now = time.time()
-    if state["disc"] and state["started"] and not state["paused"]:
-        state["time"] += now - state["tick"]
+    if state["disc"] and state["started"] and not state["paused"] and now > state["bd_hold_until"]:
+        state["time"] += now - max(state["tick"], state["bd_hold_until"])
     state["tick"] = now
 
 
@@ -129,6 +134,12 @@ def status():
         length = tracks[state["track"]][1]
         return {"state": vlc_state, "kind": "cd", "volume": state["volume"], "track": state["track"], "tracks": len(tracks),
                 "time": int(state["time"]), "length": length, "abs": int(state["time"])}
+    if disc.get("format") == "bluray":
+        # A Blu-ray reports title 1 everywhere, and the background of its menu is a long video.
+        return {"state": vlc_state, "time": int(state["time"]), "length": 3908 if state["in_menu"] else state["film_length"],
+                "volume": state["volume"], "chapter": 0, "title": 1,
+                "audio": [{"id": 4352, "name": "Track 1 - [English]"}],
+                "subtitles": [{"id": -1, "name": "Disable"}, {"id": 4608, "name": "Track 1 - [English]"}]}
     # A real disc's menu reports title 0 and a short duration, not "no duration".
     return {"state": vlc_state, "time": int(state["time"]) % 190 if state["in_menu"] else int(state["time"]),
             "length": 190 if state["in_menu"] else state["film_length"],
@@ -151,6 +162,8 @@ def command(action, value):
             return 503, {"error": "VLC is not ready"}
         state["started"] = True
         state["paused"] = False
+        if disc.get("format") == "bluray":
+            state["bd_hold_until"] = time.time() + state["bd_opening"]
     elif action == "resume_apply":
         if state["resume"] and disc["resume"]:
             state["time"] = float(disc["resume"]["time"])
@@ -172,6 +185,10 @@ def command(action, value):
         state["time"] = 0.0
     elif action == "nav" and value == "activate":
         state["in_menu"] = False
+    elif action == "return" and disc.get("format") == "bluray":
+        return 400, {"error": "Use the menu button: on a Blu-ray it opens the disc's pop-up menu"}
+    elif action == "menu" and disc.get("format") == "bluray":
+        pass  # the disc's pop-up menu, over the film
     elif action == "return":
         state["in_menu"] = True
     elif action == "menu":
@@ -285,7 +302,7 @@ class Handler(BaseHTTPRequestHandler):
         info = {"url": "http://%s:%d/?usr=tv&pwd=neko&cast=1" % (host, STREAM_PORT), "title": None, "id": None,
                 "kind": "dvd", "resume": False, "resume_at": None}
         if disc:
-            info.update({"title": disc["title"], "id": disc["id"], "kind": disc["kind"], "resume": bool(state["resume"] and disc["resume"]),
+            info.update({"title": disc["title"], "id": disc["id"], "kind": disc["kind"], "format": disc.get("format"), "resume": bool(state["resume"] and disc["resume"]),
                          "resume_at": disc["resume"]["time"] if state["resume"] and disc["resume"] else None})
             if disc["kind"] == "cd":
                 info.update({"artist": disc["artist"], "cover": "/api/cover/" + disc["id"], "tracks": tracks_of(disc)})
