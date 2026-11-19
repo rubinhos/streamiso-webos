@@ -92,8 +92,35 @@ Give file paths relative to the current folder, with forward slashes: only that 
 
 ### 4. Open the app
 
-Open **StreamISO** in the TV's app list, enter your server's address (for example `192.168.0.10:8080`) and choose
-**Save and connect**. The app remembers it, and you can change it later in **Settings**.
+Open **StreamISO** in the TV's app list. The first screen asks for:
+
+- **Address:** your server's address, for example `192.168.0.10:8080` (the port is 8080 if you leave it out).
+- **Second address** (optional): another way to reach the same server, such as its Tailscale address (see
+  [Using it away from home](#using-it-away-from-home-tailscale)).
+- **API key:** the `API_KEY` from the server's `.env`.
+- **Use:** **Automatic** tries the address first and, if it does not answer within 4 seconds, the second one. Or choose
+  always the address, or always the second address.
+
+Press OK on a field to type, then choose **Save and connect**. The app remembers it all, and you can change it later in
+**Settings**, which also shows the address in use.
+
+If the video stops while a disc plays (the network or the server), the app opens the stream again by itself, without
+reopening the disc. If it keeps stopping, it says so and offers to try again.
+
+## Using it away from home (Tailscale)
+
+StreamISO has no login, so do not open its ports on your router. To reach the server from another place, use
+[Tailscale](https://tailscale.com), a private VPN between your own devices, set up on the server as the
+[StreamISO README](https://github.com/rubinhos/streamiso#watching-from-another-network-tailscale) describes (Tailscale
+on the server, and its Tailscale IP added to `SERVER_IP`).
+
+LG TVs have no Tailscale app, so a TV can only use it through a device on its own network that does: a router with
+Tailscale (OpenWrt, GL.iNet and some others offer it), or a PC or Raspberry Pi set up as a
+[subnet router](https://tailscale.com/kb/1019/subnets) for that network, with the TV's network sending the
+`100.64.0.0/10` range to it. Then, in the app's Settings, keep the home address as the first one, type the server's
+Tailscale address (`100.101.102.103:8080`) as the second one, and leave **Use: Automatic**.
+
+A TV that stays at home does not need any of this: the home address is enough.
 
 ## Releases
 

@@ -92,7 +92,7 @@ The focus stays in the app, which takes it back whenever the stream's page asks 
 ## Tested and not tested
 
 **Tested in a headless Chrome (GitHub Actions), against the simulated server:** focus movement, the rule for each key, the opening order
-(`resume_apply`, then `start`), the errors and the first launch.
+(`resume_apply`, then `start`), the errors and the first launch, the second address, the API key and reconnecting a stream that stops.
 
 **Tested against a real Neko, from a PC, with the same code in the Samsung app:** both video routes connect and deliver
 the picture.
@@ -111,3 +111,6 @@ the picture.
    `com.webos.service.tvpower`, which may not be open to apps in developer mode.
 9. **Magic Remote pointer:** pointing and clicking on cards and buttons, and the arrows again after the pointer hides.
 10. **Home button during a film:** it should pause. See what happens when you return.
+11. **The new Settings fields:** typing the second address and the API key, and whether the two columns fit the screen.
+12. **Reconnecting:** turn the server's network off for a moment during a film. The picture should come back without
+    the disc starting over.
