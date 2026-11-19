@@ -67,8 +67,11 @@
 
   // showSeen: false starts the app as it does at first, with the discs already played hidden. Most tests need
   // them, so they are shown otherwise.
-  function loadApp(server, showSeen) {
+  // extra: more of the app's storage to set, such as the second address or the API key.
+  function loadApp(server, showSeen, extra) {
     localStorage.setItem("streamiso.server", server === undefined ? location.origin : server);
+    ["streamiso.server2", "streamiso.key", "streamiso.serverChoice"].forEach(function (k) { localStorage.removeItem(k); });
+    for (var k in extra || {}) localStorage.setItem(k, extra[k]);
     localStorage.removeItem("streamiso.showSeen");
     localStorage.removeItem("streamiso.video");
     localStorage.setItem("streamiso.hideSeen", showSeen === false ? "1" : "0");
@@ -858,6 +861,12 @@
         check("OK leaves the field", !S().focus.isLocked() && active().id === "server-field", active().id);
         return press("down");
       }).then(function () {
+        check("down reaches the second address", active().id === "server2-field", active().id);
+        return press("down");
+      }).then(function () {
+        check("then the API key", active().id === "key-field", active().id);
+        return press("down");
+      }).then(function () {
         check("down reaches Save", active().id === "settings-save", active().id);
         return press("enter");
       }).then(function () {
@@ -884,6 +893,67 @@
         return until(function () { return doc().querySelector(".card:focus"); }, "the catalog again");
       }).then(function () {
         check("Back leaves Settings without changing anything", localStorage.getItem("streamiso.server") === location.origin);
+      });
+    },
+
+    // The first address does not answer (nothing listens on port 9), so the app uses the second one.
+    function secondAddress() {
+      return post("/_mock/reset").then(function () {
+        return loadApp("http://127.0.0.1:9", undefined, { "streamiso.server2": location.origin });
+      }).then(function () {
+        return until(function () { return doc().querySelector(".card:focus"); }, "the catalog from the second address", 15000);
+      }).then(function () {
+        check("the app talks to the second address", S().api.server() === location.origin, S().api.server());
+        check("covers come from it too", discCard(DVD_PLAIN).querySelector("img").getAttribute("data-src").indexOf(location.origin) === 0);
+        return loadApp("http://127.0.0.1:9", undefined, { "streamiso.server2": location.origin, "streamiso.serverChoice": "first" });
+      }).then(function () {
+        return until(function () { return $("dialog") && !$("dialog").hidden; }, "the error with only the first address", 15000);
+      }).then(function () {
+        check("choosing the first address does not fall back", /Server unreachable/.test($("dialog-title").textContent), $("dialog-title").textContent);
+        return press("back");
+      });
+    },
+
+    // A server with API_KEY refuses calls without it, and the app sends the key it was given.
+    function apiKey() {
+      return post("/_mock/reset").then(function () { return post("/_mock/set", { api_key: "k1" }); }).then(function () {
+        return loadApp(undefined, undefined, { "streamiso.key": "k1" });
+      }).then(function () {
+        return until(function () { return doc().querySelector(".card:focus"); }, "the catalog with the key");
+      }).then(function () {
+        return openDisc(DVD_PLAIN);
+      }).then(function () {
+        return actions();
+      }).then(function (log) {
+        check("the key goes with every call", !hasAction(log, "refused"), log);
+        return loadApp(undefined, undefined, { "streamiso.key": "wrong" });
+      }).then(function () {
+        return until(function () { return $("dialog") && !$("dialog").hidden; }, "the refusal");
+      }).then(function () {
+        check("a wrong key shows the server's answer", /API key/.test($("dialog-text").textContent), $("dialog-text").textContent);
+        return post("/_mock/set", { api_key: "" });
+      });
+    },
+
+    // The video stops while the disc plays: the app opens the stream again, not the disc, and gives up after a few.
+    function reconnectVideo() {
+      return toCatalog().then(function () { return openDisc(DVD_PLAIN); }).then(clearLog).then(function () {
+        var first = doc().querySelector("#stage iframe");
+        S().player.streamLost("test drop");
+        check("the cover says the video is reconnecting", shown("loading") && /Reconnecting/.test($("loading-text").textContent), $("loading-text").textContent);
+        return until(function () { var f = doc().querySelector("#stage iframe"); return f && f !== first && !shown("loading"); }, "a new stream");
+      }).then(function () {
+        return actions();
+      }).then(function (log) {
+        check("the disc was not opened again", !hasAction(log, "play"), log);
+        function drop() {
+          S().player.streamLost("test drop");
+          return until(function () { return !shown("loading") || ($("dialog") && !$("dialog").hidden); }, "the stream back");
+        }
+        return drop().then(drop).then(drop);
+      }).then(function () {
+        check("too many drops end in a dialog", !$("dialog").hidden && /keeps stopping/.test($("dialog-title").textContent), $("dialog-title").textContent);
+        return press("back");
       });
     }
   ];

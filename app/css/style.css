@@ -22,12 +22,18 @@ h2 { margin: 0 0 12px; font-size: 40px; font-weight: 600; }
 .btn.off { opacity: .55; }
 
 /* Settings */
-#settings { padding: 80px 140px; }
-.field { width: 1000px; padding: 6px; margin: 24px 0 8px; background: #252c35; border-radius: 12px; }
+#settings { padding: 60px 120px; }
+#settings .logo { width: 300px; margin-bottom: 24px; }
+.columns { display: flex; align-items: flex-start; }
+.column { width: 1000px; }
+.column.side { width: 560px; margin-left: 120px; }
+.label { display: block; margin-top: 18px; font-size: 26px; color: #a4b0bd; }
+.field { width: 1000px; padding: 6px; margin: 8px 0 0; background: #252c35; border-radius: 12px; }
 .field input { width: 100%; padding: 14px 20px; font: inherit; color: #eef2f6; background: #171c22; border: 0; outline: none; border-radius: 8px; }
-.message { min-height: 44px; margin: 8px 0 18px; color: #ff9c9c; }
+.message { min-height: 44px; margin: 14px 0 14px; color: #ff9c9c; white-space: pre-line; }
 .message.ok { color: #75e3a5; }
 #settings h2 { margin-top: 44px; font-size: 30px; color: #a4b0bd; }
+#settings .side h2:first-child { margin-top: 0; }
 .diag { margin: 0; font: 24px/1.4 Consolas, "DejaVu Sans Mono", monospace; color: #a4b0bd; white-space: pre-wrap; word-break: break-word; }
 
 /* Catalog */
