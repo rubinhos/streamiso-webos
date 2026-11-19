@@ -89,7 +89,9 @@ def reset():
                   "tick": time.time(), "volume": 80, "track": 0, "in_menu": True, "api_down": False,
                   "stream_silent": False, "audio_blocked": True, "unlock_blocked": 0, "fail_start": 0, "film_length": 6300,
                   # a Blu-ray's time stays at 0 for this long after the start, as while its Java program starts
-                  "bd_opening": 3.0, "bd_hold_until": 0.0})
+                  "bd_opening": 3.0, "bd_hold_until": 0.0,
+                  # API_KEY on the real server: when set, calls under /api/ (but covers) without it get 403
+                  "api_key": ""})
     del log[:]
 
 
@@ -225,9 +227,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", kind)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
-        # Plays the part of CORS_ORIGIN=null on the real server.
+        # Plays the part of API_KEY on the real server, which answers every origin (the key is not checked here).
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-StreamISO-Key")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
         self.wfile.write(body)
@@ -259,6 +261,17 @@ class Handler(BaseHTTPRequestHandler):
             return True
         return False
 
+    def refuse_key(self, path):
+        key = state["api_key"]
+        if not key or not path.startswith("/api/") or path.startswith("/api/cover/"):
+            return False
+        sent = self.headers.get("X-StreamISO-Key") or (re.search(r"[?&]key=([^&]*)", self.path) or [None, ""])[1]
+        if sent == key:
+            return False
+        log.append({"action": "refused", "value": path})
+        self.send_json(403, {"error": "Missing or wrong API key (API_KEY in the server's .env)"})
+        return True
+
     def do_OPTIONS(self):
         self.send_bytes(204, b"", "text/plain")
 
@@ -269,6 +282,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         with lock:
             if self.drop_if_down(path):
+                return
+            if self.refuse_key(path):
                 return
             if path == "/api/discs":
                 playing = state["disc"]["id"] if state["disc"] else None
@@ -313,6 +328,8 @@ class Handler(BaseHTTPRequestHandler):
         body = self.read_json()
         with lock:
             if self.drop_if_down(path):
+                return
+            if self.refuse_key(path):
                 return
             match = re.match(r"^/api/play/([^/]+)$", path)
             if match:

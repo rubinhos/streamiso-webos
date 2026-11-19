@@ -82,10 +82,10 @@ needs CORS on Neko. Without the answer the client falls back to Neko's older soc
 testing. If you need it, in the `neko` service of StreamISO's `docker-compose.yml`:
 
 ```yaml
-NEKO_SERVER_CORS: "${CORS_ORIGIN:-}"
+NEKO_SERVER_CORS: "null"
 ```
 
-Pin `NEKO_IMAGE` to a release when using the built-in client, since it depends on Neko's protocol.
+StreamISO pins `NEKO_IMAGE` to a tested Neko release, which matters here: the built-in client depends on Neko's protocol.
 
 The focus stays in the app, which takes it back whenever the stream's page asks for it. DVD menu moves go to `POST /api/player/cmd`.
 

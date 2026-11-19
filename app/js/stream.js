@@ -99,6 +99,14 @@
     var socketBase = base.replace(/^http/i, "ws");
     var closed = false, ws = null, pc = null, token = null, legacy = false, reported = null;
     var step = "signing in to Neko", variantAt = 0, errors = [], lastOffer = "", pendingCandidates = [];
+    var dropTimer = 0, gone = false;
+
+    // Once, when a stream that was working stops: the player then opens a new one.
+    function lost(reason) {
+      if (gone || closed) return;
+      gone = true;
+      if (events.onLost) events.onLost(reason);
+    }
 
     var video = document.createElement("video");
     video.autoplay = true;
@@ -132,7 +140,19 @@
         else send("signal/candidate", e.candidate.toJSON());
       };
       peer.oniceconnectionstatechange = function () {
-        step = "network: " + peer.iceConnectionState;
+        var state = peer.iceConnectionState;
+        step = "network: " + state;
+        clearTimeout(dropTimer);
+        if (closed || peer !== pc) return;
+        // "disconnected" often recovers by itself (a Wi-Fi hiccup); "failed" does not.
+        if (state === "failed") lost("the network connection to the video failed");
+        else if (state === "disconnected") {
+          dropTimer = setTimeout(function () {
+            if (!closed && peer === pc && peer.iceConnectionState !== "connected" && peer.iceConnectionState !== "completed") {
+              lost("the network connection to the video dropped");
+            }
+          }, DROP_GRACE_MS);
+        }
       };
       peer.ontrack = function (e) {
         // One stream for both tracks: assigning srcObject again would abort the pending play().
@@ -195,8 +215,10 @@
         step = "waiting for the offer";
         if (!legacy) send("signal/request", { video: {}, audio: {} });
       };
+      ws.onclose = function () { lost("the connection to Neko closed"); };
       ws.onmessage = function (e) {
-        var msg = JSON.parse(e.data);
+        var msg;
+        try { msg = JSON.parse(e.data); } catch (err) { return; /* not a message of Neko's */ }
         var data = legacy ? msg : (msg.payload || {});
         if (msg.event === "system/heartbeat") send("client/heartbeat", {});
         else if (msg.event === "signal/provide" || msg.event === "signal/offer") negotiate(data.sdp);
@@ -235,7 +257,8 @@
       close: function () {
         closed = true;
         clearInterval(audioTimer);
-        if (ws) { ws.onmessage = null; ws.close(); }
+        clearTimeout(dropTimer);
+        if (ws) { ws.onmessage = null; ws.onclose = null; ws.close(); }
         if (pc) pc.close();
         video.srcObject = null;
         if (video.parentNode) video.parentNode.removeChild(video);
@@ -250,7 +273,21 @@
   function openPlain(url, mount, events) {
     var video = document.createElement("video");
     var step = "waiting for the plain video";
-    var reported = false;
+    var reported = false, gone = false, lastTime = -1, stillSince = 0;
+    function lost(reason) {
+      if (gone) return;
+      gone = true;
+      clearInterval(watch);
+      if (events.onLost) events.onLost(reason);
+    }
+    // The server keeps sending the screen even while the disc is paused, so a picture that stops moving for a
+    // while means the stream stopped (the server, the network, or the TV's player).
+    var watch = setInterval(function () {
+      if (!reported) return;
+      if (video.currentTime !== lastTime) { lastTime = video.currentTime; stillSince = Date.now(); return; }
+      if (Date.now() - stillSince > STALL_MS) lost("the plain video stopped arriving");
+    }, 1000);
+    video.addEventListener("ended", function () { if (reported) lost("the plain video ended"); });
     video.autoplay = true;
     mount.appendChild(video);
     video.addEventListener("playing", function ready() {
@@ -275,6 +312,8 @@
         if (again && again.catch) again.catch(function () {});
       },
       close: function () {
+        gone = true;
+        clearInterval(watch);
         video.removeAttribute("src");
         try { video.load(); } catch (e) { /* releases the TV's player */ }
         if (video.parentNode) video.parentNode.removeChild(video);
@@ -283,6 +322,10 @@
   }
 
   var PREFERENCE_KEY = "streamiso.video";
+  // How long a dropped network connection may take to come back, and a plain video to stand still, before the
+  // player opens the stream again.
+  var DROP_GRACE_MS = 8000;
+  var STALL_MS = 15000;
 
   // The Chrome major version in the user agent, or 0 when it is not Chrome.
   function chromeVersion() {

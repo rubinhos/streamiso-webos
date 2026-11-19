@@ -9,15 +9,33 @@
 
 <section id="settings" class="screen" hidden>
   <img class="logo" src="img/logo.svg" alt="StreamISO">
+  <div class="columns">
+  <div class="column">
   <h1 id="settings-title">Connect to your server</h1>
   <p class="muted">The address of your StreamISO server, for example 192.168.0.10:8080. Press OK to type.</p>
-  <div id="server-field" class="field" tabindex="-1" data-focusable data-act="edit">
+  <label class="label" for="server-input">Address</label>
+  <div id="server-field" class="field" tabindex="-1" data-focusable data-act="edit" data-input="server-input">
     <input id="server-input" type="url" tabindex="-1" autocomplete="off" spellcheck="false">
+  </div>
+  <label class="label" for="server2-input">Second address (optional), such as the server's Tailscale address</label>
+  <div id="server2-field" class="field" tabindex="-1" data-focusable data-act="edit" data-input="server2-input">
+    <input id="server2-input" type="url" tabindex="-1" autocomplete="off" spellcheck="false">
+  </div>
+  <label class="label" for="key-input">API key: API_KEY in the server's .env (empty if it has none)</label>
+  <div id="key-field" class="field" tabindex="-1" data-focusable data-act="edit" data-input="key-input">
+    <input id="key-input" type="text" tabindex="-1" autocomplete="off" spellcheck="false" autocapitalize="off">
   </div>
   <p id="settings-message" class="message" role="status"></p>
   <div class="row">
     <button id="settings-save" type="button" class="btn" tabindex="-1" data-focusable data-act="save">Save and connect</button>
     <button id="settings-back" type="button" class="btn" tabindex="-1" data-focusable data-act="cancel">Back</button>
+  </div>
+  </div>
+  <div class="column side">
+  <h2>Server</h2>
+  <p class="muted">Automatic tries the address first, then the second one. Press OK to change.</p>
+  <div class="row">
+    <button id="settings-choice" type="button" class="btn" tabindex="-1" data-focusable data-act="choice"></button>
   </div>
   <h2>Video</h2>
   <p class="muted">Automatic uses WebRTC, and plain video on TVs whose WebRTC cannot connect. Plain video arrives a few seconds late. Press OK to change.</p>
@@ -26,6 +44,8 @@
   </div>
   <h2>About this TV</h2>
   <pre id="settings-diag" class="diag"></pre>
+  </div>
+  </div>
 </section>
 
 <section id="catalog" class="screen" hidden>

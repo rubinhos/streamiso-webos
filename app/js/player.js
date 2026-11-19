@@ -18,6 +18,9 @@
   var SCRUB_RUN_MS = 700;
   var STATUS_SETTLE_MS = 300;
   var MENU_MAX_SECONDS = 300;
+  // More drops than this within the window, and the player stops reconnecting by itself.
+  var MAX_RECONNECTS = 3;
+  var RECONNECT_WINDOW_MS = 5 * 60 * 1000;
   // The same icons as StreamISO's web player.
   var ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
   var ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
@@ -407,7 +410,7 @@
       current.vlcUp = true;
       current.status = st;
       if (current.bdOpening && st.state === "playing" && st.time > 0) current.bdOpening = false;
-      if (current.started) S$("loading").hidden = !current.bdOpening;
+      if (current.started) S$("loading").hidden = !current.bdOpening && !current.reconnecting;
       else S$("loading-text").textContent = current.streamReady ? "Starting the disc" : "Connecting to the video";
       renderStatus();
       tryStart();
@@ -452,13 +455,74 @@
     poll();
   }
 
+  // The video stopped while the disc plays on (the network, the server's encoder or the TV's player). Only the
+  // stream is opened again; the disc stays where it is. A stream that keeps dropping ends in a dialog.
+  function reconnect(reason) {
+    var current = session;
+    if (!current || current.failed || current.reconnecting) return;
+    var now = Date.now();
+    current.drops = (current.drops || []).filter(function (t) { return now - t < RECONNECT_WINDOW_MS; });
+    current.drops.push(now);
+    if (current.drops.length > MAX_RECONNECTS) {
+      failure("The video keeps stopping", "It stopped " + current.drops.length + " times in a few minutes. Last time: " +
+        reason + ".", retryAfterFailure(function () { current.drops = []; reconnect(reason); }));
+      return;
+    }
+    current.reconnecting = true;
+    current.streamReady = false;
+    clearTimeout(current.readyTimer);
+    if (current.stream) current.stream.close();
+    current.stream = null;
+    S$("stage").innerHTML = "";
+    showLoading(current.disc.title, "The video stopped (" + reason + "). Reconnecting…");
+    function open(url) {
+      if (current !== session) return;
+      openStream(url);
+      current.readyTimer = setTimeout(function () {
+        if (current !== session || current.streamReady) return;
+        current.reconnecting = false;
+        failure("The video did not come back", "Last step: " + (current.stream ? current.stream.step() : "none") + ".",
+          retryAfterFailure(function () { reconnect(reason); }));
+      }, config.readyTimeoutMs);
+    }
+    if (S.stream.mode() === "plain") {
+      S.api.plainVideo().then(open, function (err) {
+        if (current !== session) return;
+        current.reconnecting = false;
+        failure("The plain video did not start", err.message, retryAfterFailure(function () { reconnect(reason); }));
+      });
+    } else {
+      open(current.info.url);
+    }
+  }
+
+  // A dialog's "Try again" after failure(), which stopped the status poll.
+  function retryAfterFailure(again) {
+    var current = session;
+    return function () {
+      if (current !== session) return;
+      current.failed = false;
+      current.failures = 0;
+      current.poll = setInterval(poll, config.pollMs);
+      again();
+    };
+  }
+
   function openStream(url) {
     session.stream = S.stream.open(url, S$("stage"), {
       onReady: function () {
         if (!session) return;
         session.streamReady = true;
+        if (session.reconnecting) {
+          session.reconnecting = false;
+          clearTimeout(session.readyTimer);
+          S$("loading").hidden = !session.bdOpening;
+          session.stream.unlock();
+          return;
+        }
         tryStart();
       },
+      onLost: function (reason) { S.player.streamLost(reason); },
       onError: function (detail) {
         failure("This TV did not accept the stream", detail + "\n\n" + navigator.userAgent, reopen);
       },
@@ -584,6 +648,8 @@
         fire("toggle");
       }
     },
+    // The stream stopped (see stream.js). Before the disc started, the start-up timeout reports what went wrong.
+    streamLost: function (reason) { if (session && session.started) reconnect(reason); },
     onClosing: function () { if (session) S.api.stopBeacon(); }
   };
 })(window.Streamiso);

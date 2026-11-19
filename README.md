@@ -49,11 +49,15 @@ To put it on the TV you need a PC on the same network as the TV, with one of the
 
 ### 1. Set up the server
 
-Add this to StreamISO's `.env`, then run `docker compose up -d`:
+The app runs from a `file://` page, and StreamISO refuses API calls from other origins unless they carry its key.
+Add a key of your choice to StreamISO's `.env`, then run `docker compose up -d`:
 
 ```ini
-CORS_ORIGIN=null
+API_KEY=pick-any-key
 ```
+
+Type the same key in the app's Settings. The Settings screen also takes a second address for the same server, such as
+its Tailscale address, used when the first one does not answer (or always, if you choose it there).
 
 ### 2. Turn on developer mode on the TV
 
