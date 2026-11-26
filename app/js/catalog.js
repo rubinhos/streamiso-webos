@@ -119,6 +119,15 @@
     return el;
   }
 
+  // The server sends a series or film name alone ("Friends", not "Friends S01 D2"), with its season and disc
+  // apart: they follow the name on a card, as on the web page, so the discs of a season tell apart.
+  function discNumbers(disc) {
+    var parts = [];
+    if (given(disc.season)) parts.push("S" + disc.season);
+    if (given(disc.disc)) parts.push("D" + disc.disc);
+    return parts.length ? " · " + parts.join(" ") : "";
+  }
+
   function buildCard(disc, playing) {
     var card = element("button", "card " + disc.kind);
     card.type = "button";
@@ -140,7 +149,7 @@
       cover.appendChild(bar);
     }
     card.appendChild(cover);
-    card.appendChild(element("span", "card-title", disc.title));
+    card.appendChild(element("span", "card-title", disc.title + discNumbers(disc)));
     var note = disc.id === playing ? "Now open" : disc.resume ? "Continue at " + S.formatTime(disc.resume.time) : "";
     card.appendChild(element("span", "card-resume", note));
 
